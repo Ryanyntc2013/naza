@@ -68,6 +68,22 @@ func TestBEUint32(t *testing.T) {
 	}
 }
 
+func TestBEUint64(t *testing.T) {
+	vector := []struct {
+		input  []byte
+		output uint64
+	}{
+		{input: []byte{0, 0, 0, 0, 0, 0, 0, 0}, output: 0},
+		{input: []byte{0, 0, 0, 0, 1, 0, 0, 0}, output: 1 * 256 * 256 * 256},
+		{input: []byte{0, 0, 0, 0, 12, 34, 56, 78}, output: 12*256*256*256 + 34*256*256 + 56*256 + 78},
+		{input: []byte{0, 12, 34, 56, 78, 0, 0, 0}, output: 12*256*256*256*256*256*256 + 34*256*256*256*256*256 + 56*256*256*256*256 + 78*256*256*256},
+	}
+
+	for i := 0; i < len(vector); i++ {
+		assert.Equal(t, vector[i].output, BEUint64(vector[i].input))
+	}
+}
+
 func TestBEFloat64(t *testing.T) {
 	vector := []int{
 		1,
@@ -98,6 +114,18 @@ func TestLEUint32(t *testing.T) {
 	for i := 0; i < len(vector); i++ {
 		assert.Equal(t, vector[i].output, LEUint32(vector[i].input))
 	}
+}
+
+func TestBEPutUint16(t *testing.T) {
+	b := make([]byte, 2)
+	BEPutUint16(b, 1)
+	assert.Equal(t, []byte{0, 1}, b)
+}
+
+func TestBEPutUint64(t *testing.T) {
+	b := make([]byte, 8)
+	BEPutUint64(b, 1)
+	assert.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 1}, b)
 }
 
 func TestBEPutUint24(t *testing.T) {
@@ -207,6 +235,70 @@ func TestWriteLE(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, vector[i].output, out.Bytes())
 	}
+}
+
+func TestReadBytes(t *testing.T) {
+	var buf bytes.Buffer
+	buf.Write([]byte{'1', '2', '3'})
+	b, err := ReadBytes(&buf, 2)
+	assert.Equal(t, []byte{'1', '2'}, b)
+	assert.Equal(t, nil, err)
+	b, err = ReadBytes(&buf, 2)
+	assert.Equal(t, []byte{'3', 0}, b)
+	assert.IsNotNil(t, err)
+	b, err = ReadBytes(&buf, 2)
+	assert.Equal(t, nil, b)
+	assert.IsNotNil(t, err)
+}
+
+func TestRead(t *testing.T) {
+	var err error
+	b := &bytes.Buffer{}
+	_, err = ReadUint8(b)
+	assert.IsNotNil(t, err)
+	_, err = ReadBEUint16(b)
+	assert.IsNotNil(t, err)
+	_, err = ReadBEUint24(b)
+	assert.IsNotNil(t, err)
+	_, err = ReadBEUint32(b)
+	assert.IsNotNil(t, err)
+	_, err = ReadBEUint64(b)
+	assert.IsNotNil(t, err)
+	_, err = ReadLEUint32(b)
+	assert.IsNotNil(t, err)
+
+	b.Write([]byte{1})
+	i8, err := ReadUint8(b)
+	assert.Equal(t, uint8(1), i8)
+	assert.Equal(t, nil, err)
+	b.Write([]byte{1, 2})
+	i16, err := ReadBEUint16(b)
+	assert.Equal(t, BEUint16([]byte{1, 2}), i16)
+	assert.Equal(t, nil, err)
+	b.Write([]byte{1, 2, 3})
+	i24, err := ReadBEUint24(b)
+	assert.Equal(t, BEUint24([]byte{1, 2, 3}), i24)
+	assert.Equal(t, nil, err)
+	b.Write([]byte{1, 2, 3, 4})
+	i32, err := ReadBEUint32(b)
+	assert.Equal(t, BEUint32([]byte{1, 2, 3, 4}), i32)
+	assert.Equal(t, nil, err)
+	b.Write([]byte{1, 2, 3, 4, 5, 6, 7, 8})
+	i64, err := ReadBEUint64(b)
+	assert.Equal(t, BEUint64([]byte{1, 2, 3, 4, 5, 6, 7, 8}), i64)
+	assert.Equal(t, nil, err)
+
+	b.Write([]byte{1, 0, 0, 0})
+	i32, err = ReadLEUint32(b)
+	assert.Equal(t, uint32(1), i32)
+	assert.Equal(t, nil, err)
+}
+
+func TestReadString(t *testing.T) {
+	var buf bytes.Buffer
+	str, err := ReadString(&buf, 2)
+	assert.Equal(t, "", str)
+	assert.IsNotNil(t, err)
 }
 
 func BenchmarkBEFloat64(b *testing.B) {

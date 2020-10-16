@@ -35,7 +35,7 @@ var loopNum = 1000
 var sleepMSec = time.Duration(10) * time.Millisecond
 
 func size() int {
-	return random(1, 256*1024)
+	return random(1, 128*1024)
 
 	//return 128 * 1024
 
@@ -119,13 +119,13 @@ func main() {
 	}
 	wg.Wait()
 	memfd, err := os.Create(fmt.Sprintf("/tmp/mem%d.prof", strategy))
-	nazalog.FatalIfErrorNotNil(err)
+	nazalog.Assert(nil, err)
 	_ = pprof.WriteHeapProfile(memfd)
 	_ = memfd.Close()
 	nazalog.Debug("> GC.")
 	runtime.GC()
 	nazalog.Debug("< GC.")
-	if strategy != 5 {
+	if strategy != 3 {
 		nazalog.Debugf("%+v", bp.RetrieveStatus())
 	}
 	nazalog.Debug("< loop.")

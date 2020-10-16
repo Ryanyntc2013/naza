@@ -6,12 +6,15 @@
 //
 // Author: Chef (191201771@qq.com)
 
-package taskpool
+package taskpool_test
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/q191201771/naza/pkg/taskpool"
 
 	"github.com/q191201771/naza/pkg/assert"
 	"github.com/q191201771/naza/pkg/nazalog"
@@ -41,91 +44,123 @@ func BenchmarkOriginGo(b *testing.B) {
 func BenchmarkTaskPool(b *testing.B) {
 	nazalog.Debug("> BenchmarkTaskPool")
 	var wg sync.WaitGroup
-	p, _ := NewPool(func(option *Option) {
+	p, _ := taskpool.NewPool(func(option *taskpool.Option) {
 		option.InitWorkerNum = initWorkerNum
 	})
-	//var ps []Pool
-	//var poolNum = 1
-	//for i := 0; i < poolNum; i++ {
-	//	ps = append(ps, p)
-	//}
 
 	b.ResetTimer()
 	for j := 0; j < 1; j++ {
 		//b.StartTimer()
 		wg.Add(taskNum)
 		for i := 0; i < taskNum; i++ {
-			p.Go(func() {
+			p.Go(func(param ...interface{}) {
 				time.Sleep(10 * time.Millisecond)
 				wg.Done()
 			})
 		}
 		wg.Wait()
-		//b.StopTimer()
-		//idle, busy := p.Status()
-		//nazalog.Debugf("done, worker num. idle=%d, busy=%d", idle, busy) // 此时还有个别busy也是正常的，因为只是业务方的任务代码执行完了，可能还没回收到idle队列中
-		//p.KillIdleWorkers()
-		//idle, busy = p.Status()
-		//nazalog.Debugf("killed, worker num. idle=%d, busy=%d", idle, busy)
 	}
 	nazalog.Debug("< BenchmarkTaskPool")
 }
 
 func TestTaskPool(t *testing.T) {
 	var wg sync.WaitGroup
-	p, _ := NewPool(func(option *Option) {
+	p, _ := taskpool.NewPool(func(option *taskpool.Option) {
 		option.InitWorkerNum = 1
 	})
 
 	go func() {
-		idle, busy := p.Status()
-		nazalog.Debugf("timer, worker num. idle=%d, busy=%d", idle, busy)
+		//for {
+		nazalog.Debugf("timer, worker num. status=%+v", p.GetCurrentStatus())
 		time.Sleep(10 * time.Millisecond)
+		//}
 	}()
 
 	n := 1000
 	wg.Add(n)
+	nazalog.Debug("start.")
 	for i := 0; i < n; i++ {
-		p.Go(func() {
+		p.Go(func(param ...interface{}) {
 			time.Sleep(10 * time.Millisecond)
 			wg.Done()
 		})
 	}
 	wg.Wait()
-	idle, busy := p.Status()
-	nazalog.Debugf("done, worker num. idle=%d, busy=%d", idle, busy) // 此时还有个别busy也是正常的，因为只是业务方的任务代码执行完了，可能还没回收到idle队列中
+	nazalog.Debugf("done, worker num. status=%+v", p.GetCurrentStatus()) // 此时还有个别busy也是正常的，因为只是业务方的任务代码执行完了，可能还没回收到idle队列中
 	p.KillIdleWorkers()
-	idle, busy = p.Status()
-	nazalog.Debugf("killed, worker num. idle=%d, busy=%d", idle, busy)
+	nazalog.Debugf("killed, worker num. status=%+v", p.GetCurrentStatus())
 
 	time.Sleep(100 * time.Millisecond)
 
 	wg.Add(n)
 	for i := 0; i < n; i++ {
-		p.Go(func() {
+		p.Go(func(param ...interface{}) {
 			time.Sleep(10 * time.Millisecond)
 			wg.Done()
 		})
 	}
 	wg.Wait()
-	idle, busy = p.Status()
-	nazalog.Debugf("done, worker num. idle=%d, busy=%d", idle, busy) // 此时还有个别busy也是正常的，因为只是业务方的任务代码执行完了，可能还没回收到idle队列中
+	nazalog.Debugf("done, worker num. status=%+v", p.GetCurrentStatus())
+}
+
+func TestMaxWorker(t *testing.T) {
+	p, err := taskpool.NewPool(func(option *taskpool.Option) {
+		option.MaxWorkerNum = 128
+	})
+	assert.Equal(t, nil, err)
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			nazalog.Debugf("timer. status=%+v", p.GetCurrentStatus())
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+
+	var wg sync.WaitGroup
+	var sum int32
+	n := 1000
+	wg.Add(n)
+	nazalog.Debugf("start.")
+	for i := 0; i < n; i++ {
+		p.Go(func(param ...interface{}) {
+			a := param[0].(int)
+			b := param[1].(int)
+			atomic.AddInt32(&sum, int32(a))
+			atomic.AddInt32(&sum, int32(b))
+			time.Sleep(10 * time.Millisecond)
+			wg.Done()
+		}, i, i)
+	}
+	wg.Wait()
+	nazalog.Debugf("end. sum=%d", sum)
 }
 
 func TestGlobal(t *testing.T) {
-	err := Init()
+	err := taskpool.Init()
 	assert.Equal(t, nil, err)
-	i, b := Status()
-	assert.Equal(t, 0, i)
-	assert.Equal(t, 0, b)
-	Go(func() {
+	s := taskpool.GetCurrentStatus()
+	assert.Equal(t, 0, s.TotalWorkerNum)
+	assert.Equal(t, 0, s.IdleWorkerNum)
+	assert.Equal(t, 0, s.BlockTaskNum)
+	taskpool.Go(func(param ...interface{}) {
 	})
-	KillIdleWorkers()
+	taskpool.KillIdleWorkers()
 }
 
 func TestCorner(t *testing.T) {
-	_, err := NewPool(func(option *Option) {
+	_, err := taskpool.NewPool(func(option *taskpool.Option) {
 		option.InitWorkerNum = -1
 	})
-	assert.Equal(t, ErrTaskPool, err)
+	assert.Equal(t, taskpool.ErrTaskPool, err)
+
+	_, err = taskpool.NewPool(func(option *taskpool.Option) {
+		option.MaxWorkerNum = -1
+	})
+	assert.Equal(t, taskpool.ErrTaskPool, err)
+
+	_, err = taskpool.NewPool(func(option *taskpool.Option) {
+		option.InitWorkerNum = 5
+		option.MaxWorkerNum = 1
+	})
+	assert.Equal(t, taskpool.ErrTaskPool, err)
 }

@@ -1,3 +1,172 @@
+#### v0.15.1
+
+- [feat] package connection: 增加GetStat函数，用于获取连接读取、发送数据的总字节数
+
+#### v0.15.0
+
+- [feat] package nazabits: 新增函数ReadBits64
+- [feat] package nazanet: UDPConnection支持IPv6
+- [refactor] package nazanet: UDPConnection构造函数支持更多配置
+
+#### v0.14.0
+
+- package nazanet:
+  - [refactor] 重构UDPConnection，既可作为服务端连接，又可作为客户端连接
+- package nazastring:
+  - [feat] 增加func DumpSliceByte
+
+#### v0.13.4
+
+- package circularqueue:
+  - [feat] 新增package，底层基于切片实现的固定容量大小的FIFO的环形队列
+- package nazanet:
+  - [feat] 这是一个新增的package，其中struct AvailUDPConnPool，可以从指定的UDP端口范围内，寻找可绑定监听的端口，绑定监听并返回
+  - [feat] 新增struct UDPConnection，对UDP连接对象的简易封装
+- package bele:
+  - [feat] 新增func BEPutUint16, BEPutUint64
+
+#### v0.13.3
+
+- package nazahttp:
+  - [fix] 当request line和status line存在多个空格时，解析错误
+- package bininfo:
+  - [feat] 增加git tag信息
+
+#### v0.13.2
+
+- package nazareflect:
+  - [feat] 新增package，提供三个函数IsNil，Equal，EqualInteger
+
+#### v0.13.1
+
+- package connection:
+  - [feat] 增加连接关闭标志，使用channel发送数据时，如果连接已关闭，可以向调用方返回错误
+  - [feat] 增加Option.WriteChanFullBehavior，使用channel发送数据时，如果channel满了，可以配置是阻塞还是返回错误
+  - [fix] 设置wChan大小时，应该使用WriteChanSize而不是WriteBufSize
+  - [refactor] 不同错误返回不同的错误值
+  - [refactor] 去除一些debug日志
+
+#### v0.13.0
+
+- package nazabits:
+    - [feat] BitReader的所有函数增加读取越界检查
+    - [feat] 增加BitReader::ReadGolomb函数，读取0阶指数哥伦布编码
+- package nazahttp:
+    - [feat] nazahttp: 增加函数ReadHTTPHeader，ParseHTTPRequestLine，ParseHTTPStatusLine，读取HTTP头部信息
+    - [refactor] 函数GetHttpFile，DownloadHTttpFile重命名为GetHTTPFile，DownloadHTTPFile
+
+#### v0.12.3
+
+- package lru:
+    - [feat] 新增package，一个基础的LRU缓存
+- package nazahttp:
+    - [feat] 新增函数GetHttpFile，用于下载HTTP文件
+
+#### v0.12.2
+
+- package nazabits:
+    - [fix] BitWriter::WriteBit如果原数据不为零值时，会错误覆盖非写入的位
+
+#### v0.12.1
+
+- package nazabits:
+    - [feat] 新增 BitReader::ReadBits16，ReadBits32，ReadBytes函数
+
+#### v0.12.0
+
+- package nazabits:
+    - [refactor] BitReader::ReadBits重命名为ReadBits8，BitWriter::WriteBits重命名为WriteBits8，WriteBits16
+    - [fix] BitWriter::WriteBit传入的值不为0和1时，只取最低位
+
+#### v0.11.0
+
+- package nazabits:
+    - [feat] 增加BitReader用于按位读取，增加BitWriter用于按位写入
+    - [refactor] GetBit8等函数修改整型类型
+
+#### v0.10.0
+
+- package nazalog:
+    - [feat] 新增WithPrefix函数，用于支持设置前缀，并且前缀可叠加，使得可以按repo ，package，对象等维度添加不同的前缀
+    - [feat] 新增Println等函数，方便替换标准库日志
+    - [perf] 减小锁粒度
+    - [test] 测试覆盖率增加至100%
+    - [refactor] 删除FatalIfErrorNotNil, PanicIfErrorNotNil, Outputf, writeShortFile四个函数函数
+- package nazabits:
+    - [feat] 新增GetBit16，GetBits16函数
+- package fake:
+    - [feat] 新增WithRecover函数
+    - [feat] 新增time.Now hook相关的接口
+    - [refactor] 重新命名os.Exit hook相关的接口
+
+#### v0.9.1
+
+- package nazabits:
+    - [feat] 新增package，提供一些位运算函数
+
+#### v0.9.0
+
+- package taskpool:
+    - [feat] 增加Option.MaxWorkerNum，可配置最大协程并发数量
+    - [feat] task任务函数可携带参数
+- package nazalog:
+    - [feat] 新增Assert函数，并可配置断言失败后的行为
+- package bele:
+    - [feat] 增加一些ReadXXX函数，从io.Reader中读取数据
+    - [feat] 新增BEUint64函数
+
+#### v0.8.0
+
+- package ratelimit:
+    - [feat] 新增漏桶LeakyBucket和令牌桶TokenBucket，把以前的RateLimit删了
+- package nazalog:
+    - [feat] 新增Sync函数，将日志刷盘
+    - [feat] panic和fatal前调用Sync
+    - [fix] 全局的Panic和Panicf忘记调用标准库中的panic
+    - [fix] 使用IsRotateDaily控制日志是否按天翻转，之前没有判断这个标志，导致总是按天翻转
+- package nazahttp:
+    - [feat] 新增DownloadHttpFile函数，下载http保持为本地文件
+
+#### v0.7.1
+
+- package snowflake
+    - [feat] 新增的包，分布式唯一性64位ID生成器
+
+#### v0.7.0
+
+- package consistenthash:
+    - [feat] Nodes 接口返回 node 对应的 point 范围，供调用方判断 hash 是否均匀
+    - [feat] hash 函数可由外部配置
+    - [refactor] 增加 struct Option
+    - [refactor] 内部 point 类型 int -> uint32
+- package bitrate:
+    - [feat]可配置 bitrate 返回时的单位
+    - [feat] unix 时间戳可选择由外部传入
+    - [refactor] struct Bitrate -> interface Bitrate
+    - [fix] 遍历切片时删除了元素导致崩溃
+- package fake:
+    - [feat] 添加 func Exit，它是对 os.Exit 的封装，便于其他代码做单元测试
+- package log:
+    - [test] 使用 fake.Exit
+
+#### v0.6.0
+
+- 新增 package ratelimit：限速器，令牌桶
+- 新增 package bitrate：计算带宽
+- 新增 package fake
+- 删除 package mockwriter
+- 删除 package mockserver
+- `demo/add_blog_license`：行尾增加两个空格，便于部分 markdown 解析器解析为为换行
+
+#### v0.5.1
+
+- package ic:
+  - 新增的包，将整型切片压缩序列化成二进制字符切片
+- package bininfo:
+  - 增加注释
+- package assert:
+  - 增加注释
+
 #### v0.5.0
 
 - package filebatch:

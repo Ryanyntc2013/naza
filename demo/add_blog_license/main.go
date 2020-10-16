@@ -19,14 +19,15 @@ import (
 )
 
 //var licenseTmpl = `
-//> **本文原始地址：** [https://pengrl.com/p/%s/](https://pengrl.com/p/%s/)
-//> **声明：** 本文后续所有修改都会第一时间在原始地址更新。本文欢迎任何形式转载，转载时注明原始出处即可。`
+//> **原文链接：** [https://pengrl.com/p/%s/](https://pengrl.com/p/%s/)
+//> **原文出处：** [yoko blog](https://pengrl.com) (https://pengrl.com)
+//> **原文作者：** [yoko](https://github.com/q191201771) (https://github.com/q191201771)
+//> **版权声明：** 本文欢迎任何形式转载，转载时完整保留本声明信息（包含原文链接、原文出处、原文作者、版权声明）即可。本文后续所有修改都会第一时间在原始地址更新。
+//
+//![fccxy](https://pengrl.com/images/fccxy_qccode_and_sys.jpg)`
 
 var licenseTmpl = `
-> **原文链接：** [https://pengrl.com/p/%s/](https://pengrl.com/p/%s/)
-> **原文出处：** [yoko blog](https://pengrl.com) (https://pengrl.com)
-> **原文作者：** yoko
-> **版权声明：** 本文欢迎任何形式转载，转载时完整保留本声明信息（包含原文链接、原文出处、原文作者、版权声明）即可。本文后续所有修改都会第一时间在原始地址更新。`
+本文完，作者[yoko](https://github.com/q191201771)，尊重劳动人民成果，转载请注明原文出处： [https://pengrl.com/p/%s/](https://pengrl.com/p/%s/)`
 
 func main() {
 	dir := parseFlag()
@@ -45,15 +46,9 @@ func main() {
 		}
 		lines := bytes.Split(content, []byte{'\n'})
 
-		//if bytes.Index(lines[len(lines)-1], []byte("声明")) != -1 {
-		//	res, err := filebatch.DeleteLines(content, filebatch.LineRange{From: -2, To: -1})
+		//if bytes.Index(lines[len(lines)-1], []byte("本文完")) != -1 ||
+		//	res, err := filebatch.DeleteLines(content, filebatch.LineRange{From: -1, To: -1})
 		//	nazalog.Debugf("%s -2", info.Name())
-		//	nazalog.FatalIfErrorNotNil(err)
-		//	return res
-		//}
-		//if bytes.Index(lines[len(lines)-2], []byte("声明")) != -1 {
-		//	res, err := filebatch.DeleteLines(content, filebatch.LineRange{From: -3, To: -1})
-		//	nazalog.Debugf("%s -3", info.Name())
 		//	nazalog.FatalIfErrorNotNil(err)
 		//	return res
 		//}
@@ -61,11 +56,11 @@ func main() {
 		//return content
 
 		// 已添加过声明，不用再添加了
-		if bytes.Index(lines[len(lines)-1], []byte("版权声明")) != -1 ||
-			bytes.Index(lines[len(lines)-2], []byte("版权声明")) != -1 {
+		if bytes.Index(lines[len(lines)-1], []byte("本文完，作者")) != -1 ||
+			bytes.Index(lines[len(lines)-2], []byte("本文完，作者")) != -1 {
+			nazalog.Debug(info.Name())
 			skipCount++
 			return nil
-
 		}
 
 		// 获取该文章的url的地址
@@ -77,13 +72,17 @@ func main() {
 				break
 			}
 		}
+		if abbrlink == "" {
+			nazalog.Errorf("abbrlink not exist. path=%s", path)
+			os.Exit(1)
+		}
 
 		// 构造好license信息，并添加在文章末尾
 		modCount++
 		license := fmt.Sprintf(licenseTmpl, abbrlink, abbrlink)
 		return filebatch.AddTailContent(content, []byte(license))
 	})
-	nazalog.FatalIfErrorNotNil(err2)
+	nazalog.Assert(nil, err2)
 	nazalog.Infof("count. mod=%d, skip=%d", modCount, skipCount)
 }
 

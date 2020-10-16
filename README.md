@@ -5,6 +5,7 @@ Go语言基础库
 <a title="TravisCI" target="_blank" href="https://www.travis-ci.org/q191201771/naza"><img src="https://www.travis-ci.org/q191201771/naza.svg?branch=master"></a>
 <a title="codecov" target="_blank" href="https://codecov.io/gh/q191201771/naza"><img src="https://codecov.io/gh/q191201771/naza/branch/master/graph/badge.svg?style=flat-square"></a>
 <a title="goreportcard" target="_blank" href="https://goreportcard.com/report/github.com/q191201771/naza"><img src="https://goreportcard.com/badge/github.com/q191201771/naza?style=flat-square"></a>
+<a title="sourcegraph" target="_blank" href="https://sourcegraph.com/github.com/q191201771/naza"><img src="https://sourcegraph.com/github.com/q191201771/naza/-/badge.svg"></a>
 <br>
 <a title="codeline" target="_blank" href="https://github.com/q191201771/naza"><img src="https://sloc.xyz/github/q191201771/naza/?category=code"></a>
 <a title="license" target="_blank" href="https://github.com/q191201771/naza/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
@@ -28,22 +29,32 @@ Go语言基础库
 
 ```
 pkg/                    ...... 源码包
+    |-- bininfo/        ...... 将编译时源码的git版本信息（当前commit log的sha值和commit message），编译时间，Go版本，平台打入程序中
     |-- nazalog/        ...... 日志库
-    |-- slicebytepool/  ...... []byte 内存池
     |-- assert/         ...... 提供了单元测试时的断言功能，减少一些模板代码
-    |-- nazastring/     ...... string 和 []byte 相关的操作
+    |-- taskpool/       ...... 非阻塞协程池，协程数量可动态增长，可配置最大协程并发数量，可手动释放空闲的协程
+    |-- bele/           ...... 大小端转换操作
+    |-- nazabits/       ...... 位操作
+    |-- bitrate/        ...... 计算带宽
+    |-- nazanet/        ...... socket操作相关
+    |-- circularqueue   ...... 底层基于切片实现的固定容量大小的FIFO的环形队列
+    |-- lru             ...... LRU缓存
+    |-- fake/           ...... 实现一些常用的接口，hook一些不方便测试的代码
     |-- consistenthash/ ...... 一致性哈希
-    |-- bininfo/        ...... 将编译时源码的 git 版本信息（当前 commit log 的 sha 值和 commit message），编译时间，Go 版本，平台打入程序中
-    |-- bele/           ...... 提供了大小端的转换操作
-    |-- nazaatomic/     ...... 原子操作
-    |-- nazajson/       ...... json 操作
-    |-- taskpool/       ...... 协程池
-    |-- connection/     ...... 对 net.Conn 接口的二次封装
+    |-- nazajson/       ...... json操作
+    |-- nazahttp/       ...... http操作
+    |-- unique/         ...... 对象唯一ID
+    |-- connection/     ...... 对net.Conn接口的二次封装
+    |-- nazareflect/    ...... 利用反射做的一些操作
     |-- filebatch/      ...... 文件批处理操作
-    |-- unique/         ...... 对象唯一 ID
-    |-- nazamd5/        ...... md5 操作
-    |-- mockserver/     ...... 模拟一些服务端，用于快速测试其它代码
-    |-- mockwriter/     ...... 模拟 Writer 接口，用于快速测试其它代码
+    |-- nazaatomic/     ...... 原子操作
+    |-- snowflake/      ...... 分布式唯一性ID生成器
+    |-- slicebytepool/  ...... []byte内存池
+    |-- nazastring/     ...... string和[]byte相关的操作
+    |-- ratelimit/      ...... 限流器，令牌桶，漏桶
+    |-- nazamd5/        ...... md5操作
+    |-- ic/             ...... 将整型切片压缩成二进制字节切片
+playground/             ...... Go实验代码片段
 demo/                   ...... 示例相关的代码
 bin/                    ...... 可执行文件编译输出目录
 ```
@@ -52,18 +63,26 @@ bin/                    ...... 可执行文件编译输出目录
 
 无任何第三方依赖
 
-#### 项目名 naza 由来
-
-本仓库主要用于存放我自己写的一些 Go 基础库代码。目前主要服务于我的另一个项目： [lal](https:////github.com/q191201771/lal)
-
-naza 即哪吒（正确拼音为 nezha，我女儿发音读作 naza，少一个字母，挺好~），希望本仓库以后能像三头六臂，有多种武器的哪吒一样，为我提供一个趁手的工具箱。
-
 #### 相关文档
 
-* pkg/bininfo [给Go程序加入编译版本时间等信息](https://https://pengrl.com/p/37397/)
+* pkg/snowflake [分布式ID生成算法snowflake介绍及Go语言实现](https://pengrl.com/p/20041/)
+* pkg/bininfo [给Go程序加入编译版本时间等信息](https://pengrl.com/p/37397/)
+* pkg/nazastring [Go语言中[]byte和string类型相互转换时的性能分析和优化](https://www.pengrl.com/p/31544/)
+
+* [Go创建对象时，如何优雅的传递初始化参数](https://pengrl.com/p/60015/)
+* playground/p3 [利用CPU cache特性优化Go程序](https://pengrl.com/p/9125/)
+* playground/p4 [老弟在吗，我的Go标准库中的二分查找有bug！](https://pengrl.com/p/20011/)
+* [写的一些其他Go相关的文章](https://pengrl.com/categories/Go/)
 
 #### 联系我
 
 欢迎扫码加我微信，进行技术交流或扯淡。
 
 <img src="https://pengrl.com/images/yoko_vx.jpeg" width="180" height="180" />
+
+#### 项目名 naza 由来
+
+本仓库主要用于存放我自己写的一些 Go 基础库代码。目前主要服务于我的另一个项目： [lal](https:////github.com/q191201771/lal)
+
+naza 即哪吒（正确拼音为 nezha，我女儿发音读作 naza，少一个字母，挺好~），希望本仓库以后能像三头六臂，有多种武器的哪吒一样，为我提供一个趁手的工具箱。
+
